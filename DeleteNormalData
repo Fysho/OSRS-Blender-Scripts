@@ -1,0 +1,7 @@
+import bpy
+
+selection = bpy.context.selected_objects
+
+for o in selection:
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.mesh.customdata_custom_splitnormals_clear()
