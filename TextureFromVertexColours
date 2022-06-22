@@ -1,0 +1,184 @@
+import bpy
+import math
+colors = []
+
+def to_rgb( hex_value ):
+    
+    b = (hex_value & 0xFF) / 255.0
+    g = ((hex_value >> 8) & 0xFF) / 255.0
+    r = ((hex_value >> 16) & 0xFF) / 255.0
+    return r, g, b
+
+def toHex2(color):
+    r = color[0]
+    g = color[1]
+    b = color[2]
+    
+    hex = 0;
+    hex = hex + int(r * 255) << 0
+    hex = hex + int(g * 255) << 8
+    hex = hex + int(b * 255) << 16
+    
+    return hex
+
+def to_hex(c):
+    if c < 0.0031308:
+        srgb = 0.0 if c < 0.0 else c * 12.92
+    else:
+        srgb = 1.055 * math.pow(c, 1.0 / 2.4) - 0.055
+
+    return hex(max(min(int(srgb * 255 + 0.5), 255), 0))
+
+def toHex(color):
+    r = color[0]
+    g = color[1]
+    b = color[2]
+    rgb = [r,g,b]
+    result = ""
+    i=0
+    while i < 3:
+        val = str(to_hex(rgb[i]))
+        val = val[2:]
+        if len(val) == 1:
+            val += val
+        result+=val
+        i+=1
+    return result
+
+def printColor(color):
+      print('Color: ', color[0], ' ' , color[1], ' ' , color[2], ' ' , color[3], ' ' )
+      
+
+ammounttosearch = 9999999
+print ('\n\nStarting Conversion from vertex colours to textured colours')
+
+print(toHex((0.002,0.002,0.002)))
+
+print ('\n\nWhat?')
+
+
+#--Find all unique colours and assign them to an array
+for ob in bpy.context.selected_editable_objects:
+    mesh = ob.data
+    vertexColors = mesh.vertex_colors.active  
+    print('number of polys: ', len(mesh.polygons))
+    i = 0
+    for polygon in mesh.polygons:
+        #print(polygon.loop_indices[0])
+        color = vertexColors.data[polygon.loop_indices[0]].color
+        #printColor(color)
+        colorhex = toHex(color)
+        #print(colorhex)
+        if(not (colorhex in colors)):
+            print('New Col: ', colorhex, ' Found')
+            colors.append(colorhex)
+            
+        
+        i = i + 1
+        if(i > ammounttosearch):
+            break
+    print('Total unique colors: ', len(colors))      
+ 
+
+#--Find how big the texture needs to be to fit all the unique colors--
+totalcols = len(colors)
+size = 1
+i = 1
+for dw in range(26):
+    if(i*i) > len(colors):
+        size = i
+        print('Image size is ', size, 'x', size)
+        break
+    i = i * 2
+    
+
+#--Create The image--
+image = bpy.data.images.new("Sprite", alpha=True, width=size, height=size)
+#image.use_alpha = True
+#image.alpha_mode = 'STRAIGHT'
+image.filepath_raw = "//Sprite.png"
+image.file_format = 'PNG'
+
+
+#--make all unused pixels pink--
+for x in range(size):
+    for y in range(size):
+        pixStart = (x*size + y) * 4
+        image.pixels[pixStart : pixStart + 4 ] = (1, 0, 1, 1)
+
+
+#--assign the pixels the correct colors--
+pixIndex = 0  
+for col in colors:
+    print(col)
+    r, g, b = to_rgb(int(col, base=16))
+    
+    pixStart = (pixIndex) * 4
+    image.pixels[pixStart : pixStart + 4 ] = (r, g, b, 1)
+    
+    pixIndex = pixIndex + 1
+
+
+image.save()
+
+print('\n\n Image Created \n\n')
+
+    
+#--Find all unique colours and assign them to an array
+for ob in bpy.context.selected_editable_objects:
+    mesh = ob.data
+    vertexColors = mesh.vertex_colors.active  
+    
+  
+    
+    #remove existing uvs
+    alluvcount = len(ob.data.uv_layers)
+    for uv in range(alluvcount):
+        ob.data.uv_layers.remove(ob.data.uv_layers[alluvcount - uv - 1])
+        
+         
+    #creat new uv layer  
+    uvlayer = mesh.uv_layers.new() 
+    mesh.uv_layers.active = uvlayer  
+    
+    i = 0
+    for polygon in mesh.polygons:
+        color = vertexColors.data[polygon.loop_indices[0]].color
+
+        colorhex = toHex(color)
+    
+      
+        for vert_idx, loop_idx in zip(polygon.vertices, polygon.loop_indices):
+           
+            index = colors.index(colorhex)
+            increment = 1 / size
+            halfinc = increment / 2
+            height = math.floor(index / size) * increment + halfinc
+            length = (index % size) * increment + halfinc
+            uvlayer.data[loop_idx].uv = (length, height)
+            
+        
+        i = i + 1
+        if(i > ammounttosearch):
+            break
+    print('Total unique colors: ', len(colors))      
+ 
+
+
+
+
+
+#mat = bpy.data.materials.new(name="TestMat")
+#mat.use_nodes = True
+#bsdf = mat.node_tree.nodes["Principled BSDF"]
+#texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
+
+#texImage.image = bpy.data.images.load("C:\\path\\to\\im.jpg")
+#mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+
+
+#for ob in bpy.context.selected_editable_objects:
+#    if ob.data.materials:
+#        ob.data.materials[0] = mat
+#    else:
+#        ob.data.materials.append(mat)
