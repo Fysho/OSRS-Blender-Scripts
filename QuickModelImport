@@ -1,0 +1,26 @@
+import bpy
+
+#https://www.osrsbox.com/tools/model-search/
+DumpLocation = 'C:\\Users\\James\\Documents\\Trillion\\ModelDumper\\models-26may2022\\models\\'
+ModelIDs = [6639, 6670]
+
+Name = 'Dharoks Platebody'
+ForceJoinImports = True;
+
+loadedObjects = []
+
+for modelID in ModelIDs:
+    fullpath = DumpLocation + str(modelID) + '.obj'
+    obj = bpy.ops.import_scene.obj(filepath=fullpath)
+    obj_object = bpy.context.selected_objects[0]
+    obj_object.name = Name
+    loadedObjects.append(obj_object)    
+
+if(ForceJoinImports):
+
+    for model in loadedObjects:
+        model.select_set(True)
+        bpy.context.view_layer.objects.active = model
+
+    bpy.ops.object.join()
+    model.name = Name
