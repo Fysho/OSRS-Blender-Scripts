@@ -2,10 +2,14 @@ import bpy
 
 #https://www.osrsbox.com/tools/model-search/
 DumpLocation = 'C:\\Users\\James\\Documents\\Trillion\\ModelDumper\\models-26may2022\\models\\'
-ModelIDs = [6639, 6670]
+ModelIDs = [9324, 9323, 9322, 9321]
 
 Name = 'Dharoks Platebody'
 ForceJoinImports = True;
+ClearSplitNormals = True;
+Shrink100x = True;
+
+#--------------------#
 
 loadedObjects = []
 
@@ -16,11 +20,22 @@ for modelID in ModelIDs:
     obj_object.name = Name
     loadedObjects.append(obj_object)    
 
+for model in loadedObjects:
+    model.select_set(True)
+    bpy.context.view_layer.objects.active = model
+    
 if(ForceJoinImports):
-
-    for model in loadedObjects:
-        model.select_set(True)
-        bpy.context.view_layer.objects.active = model
-
     bpy.ops.object.join()
     model.name = Name
+    
+if(Shrink100x):
+    bpy.ops.transform.resize(value=(0.01,0.01,0.01))
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+
+    
+if(ClearSplitNormals):    
+    selection = bpy.context.selected_objects
+
+    for o in selection:
+        bpy.context.view_layer.objects.active = o
+        bpy.ops.mesh.customdata_custom_splitnormals_clear()
