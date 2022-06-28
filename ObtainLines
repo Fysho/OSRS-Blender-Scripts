@@ -1,0 +1,49 @@
+import bpy
+
+filepath = 'F:/BlendFiles/NavMeshTests/test.txt'
+f = open(filepath, 'w')
+
+obj = bpy.context.object
+
+mesh = obj.data
+verts = [vert.co for vert in obj.data.vertices]
+plain_verts = [vert.to_tuple() for vert in verts]
+
+def printVertex(vertexIndex):
+    x = plain_verts[vertexIndex][0]
+    y = plain_verts[vertexIndex][1]
+    z = plain_verts[vertexIndex][2]
+    
+    x = str(round(x, 3))
+    y = str(round(y, 3))
+    z = str(round(z, 3))
+    print('X: ' , x.ljust(10), ' Y: ', y.ljust(10), ' Z: ', z.ljust(10))
+
+def getpos(vtx, pos):
+    return str(round(plain_verts[vtx][pos], 3))
+
+#print(len(mesh.edges))
+
+print('\nStarting Edge Process')
+
+for polygon in mesh.polygons:
+    
+    idx0 = polygon.vertices[0]
+    idx1 = polygon.vertices[1]
+   
+    #printVertex(polygon.vertices[1])
+    normal = polygon.normal
+    #print('' + getpos()
+    
+    
+    line = ''
+    line += getpos(idx0, 0) + ','
+    line += getpos(idx0, 1) + ','
+    line += getpos(idx1, 0) + ','
+    line += getpos(idx1, 1) + ','
+    line += str(round(normal[0], 3)) +','
+    line += str(round(normal[1], 3))
+    f.write(line + '\n')
+# coordinates as tuples
+print('\Done!  Saving to: ' + filepath)
+f.close()
