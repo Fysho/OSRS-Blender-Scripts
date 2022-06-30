@@ -1,0 +1,110 @@
+import bpy
+import math 
+from dataclasses import dataclass
+filepath = 'F:/BlendFiles/NavMeshTests/test2.txt'
+f = open(filepath, 'w')
+
+obj = bpy.context.object
+mesh = obj.data
+
+verts = [vert.co for vert in obj.data.vertices]
+plain_verts = [vert.to_tuple() for vert in verts]
+
+edges = []
+
+
+def getpos(vtx, pos):
+    return str(round(plain_verts[vtx][pos], 3))
+
+@dataclass
+class Edge:
+    index: int
+    faceIndex: int = -1
+    count: int = 0
+
+for edge in mesh.edges:
+    index = edge.index;
+    e = Edge(index)
+    edges.append(e)
+
+for poly in mesh.polygons:
+  
+    polygonInedx = poly.index
+    
+    for loop_index in range(poly.loop_start, poly.loop_start + poly.loop_total):
+        edgeIndex = mesh.loops[loop_index].edge_index
+       
+        ed = edges[edgeIndex]
+        ed.count = ed.count + 1
+        ed.faceIndex = polygonInedx
+     
+
+amount = 0
+for edg in edges:
+    if(edg.count == 1):
+        amount = amount + 1
+      
+        edge = mesh.edges[edg.index]
+        v1 = edge.vertices[0]
+        v2 = edge.vertices[1]
+        
+        v3 = 0;
+           
+        poly = mesh.polygons[edg.faceIndex]
+           
+        for pv in poly.vertices:
+            if(v1 != pv and v2 != pv):
+                v3 = pv
+        
+        v3x = float(getpos(v3, 0))
+        v3y = float(getpos(v3, 2))
+        
+        dx = float(getpos(v1, 0)) - float(getpos(v2, 0))
+        dy = float(getpos(v1, 2)) - float(getpos(v2, 2))
+        
+        
+        n1x = dy
+        n1y = -dx
+        
+        n2x = -dy
+        n2y = dx
+        
+        
+        t1x = float(getpos(v1, 0)) + n1x
+        t1y = float(getpos(v1, 2)) + n1y
+        
+        t2x = float(getpos(v1, 0)) + n2x
+        t2y = float(getpos(v1, 2)) + n2y
+        
+        dist1 = math.sqrt((v3x - t1x) * (v3x- t1x) + (v3y - t1y) * (v3y - t1y))
+        dist2 = math.sqrt((v3x - t2x) * (v3x- t2x) + (v3y - t2y) * (v3y - t2y))
+        
+        nx = 1
+        ny = 0
+        
+        if(dist1 < dist2):
+            nx = n1x
+            ny = n1y
+            
+        else:
+            nx = n2x
+            ny = n2y
+        
+      
+     
+            
+        
+        
+        line = ''
+        line += getpos(v1, 0) + ','
+        line += getpos(v1, 2) + ','
+        line += getpos(v2, 0) + ','
+        line += getpos(v2, 2) + ','
+        line += str(nx) + ','  #str(round(normal[0], 3)) +','
+        line += str(ny) + ','  # '0,'#str(round(normal[1], 3))
+        f.write(line + '\n')
+        
+print('Ammount of edge edges = ' , amount)
+
+print('\Done!  Saving to: ' + filepath)
+f.close()
